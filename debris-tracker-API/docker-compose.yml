@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: orbitguard
+      POSTGRES_PASSWORD: orbitguard
+      POSTGRES_DB: orbitguard
+    ports:
+      - "5432:5432"
+    volumes:
+      - orbitguard_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orbitguard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ORBITGUARD_DATABASE_URL: postgresql+psycopg2://orbitguard:orbitguard@db:5432/orbitguard
+      ORBITGUARD_ENV: production
+      ORBITGUARD_ENABLE_JOBS: "true"
+      ORBITGUARD_CORS_ORIGINS: "http://localhost:3000"
+      DEBRIS_TRACKER_API_KEYS: ${DEBRIS_TRACKER_API_KEYS:-changeme-dev-key}
+    ports:
+      - "8000:8000"
+
+  # Frontend service is added once the Next.js + CesiumJS dashboard
+  # (frontend/) lands -- see README roadmap.
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+        NEXT_PUBLIC_API_KEY: ${DEBRIS_TRACKER_API_KEYS:-changeme-dev-key}
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  orbitguard_pgdata:

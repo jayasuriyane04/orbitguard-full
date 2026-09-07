@@ -1,0 +1,11 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+sgp4>=2.23
+pydantic>=2.6
+slowapi>=0.1.9
+sqlalchemy>=2.0
+alembic>=1.13
+psycopg2-binary>=2.9
+requests>=2.31
+apscheduler>=3.10
+python-dotenv>=1.0
